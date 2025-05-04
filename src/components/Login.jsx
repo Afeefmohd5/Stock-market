@@ -1,25 +1,38 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 
-function Login({ setUser }) {
+function Login({ setUser, darkMode }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const navigate = useNavigate()
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Simple mock login: accept any username/password
     if (username && password) {
-      setUser({ username, capital: 10000, stocks: [{ symbol: 'AAPL', shares: 10 }] })
-      navigate('/dashboard')
+      try {
+        const response = await fetch('http://localhost:5000/api/users/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        })
+        const data = await response.json()
+        if (response.ok) {
+          setUser({ username: data.user.username, capital: 10000, stocks: [{ symbol: 'AAPL', shares: 10 }] })
+          navigate('/dashboard')
+        } else {
+          alert(data.message || 'Login failed')
+        }
+      } catch (error) {
+        alert('Error connecting to server')
+      }
     } else {
       alert('Please enter username and password')
     }
   }
 
   return (
-    <div className="container mt-5" style={{ maxWidth: 400 }}>
-      <h2 className="mb-4">Login</h2>
+    <div className={`container mt-5 ${darkMode ? 'bg-dark text-light rounded p-4' : ''}`} style={{ maxWidth: 400 }}>
+      <h2 className={`mb-4 text-center fw-bold ${darkMode ? 'text-info' : 'text-primary'}`}>Login</h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
           <label htmlFor="username" className="form-label">Username:</label>
@@ -45,8 +58,8 @@ function Login({ setUser }) {
         </div>
         <button type="submit" className="btn btn-primary w-100">Login</button>
       </form>
-      <p className="mt-3 text-center">
-        Don't have an account? <Link to="/signup">Sign up</Link>
+      <p className={`mt-3 text-center ${darkMode ? 'text-light' : ''}`}>
+        Don't have an account? <Link to="/signup" className={darkMode ? 'text-info' : ''}>Sign up</Link>
       </p>
     </div>
   )
